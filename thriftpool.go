@@ -38,13 +38,9 @@ func GetThriftClientCreatorFunc(ClientFactory ClientFactoryGenratedByThrift) Thr
 		}
 		protocolFactory := thrift.NewTBinaryProtocolFactory(true, true)
 		var transportFactory thrift.TTransportFactory
-
 		transportFactory = thrift.NewTBufferedTransportFactory(8192)
-
 		transportFactory = thrift.NewTFramedTransportFactory(transportFactory)
-
 		transport, _ := transportFactory.GetTransport(socket)
-
 		// c := thrift.NewTStandardClient(transport , protocolFactory)
 		c := thrift.NewTStandardClient(protocolFactory.GetProtocol(transport), protocolFactory.GetProtocol(transport))
 
@@ -52,7 +48,7 @@ func GetThriftClientCreatorFunc(ClientFactory ClientFactoryGenratedByThrift) Thr
 
 		err = transport.Open()
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("GetThriftClientCreatorFunc", err)
 			return nil, err
 		}
 
@@ -427,6 +423,22 @@ func (mp *MapPool) Get(ip, port string) *ThriftPool {
 		mp.pools[addr] = serverPool
 		mp.lock.Unlock()
 	}
+	return serverPool
+}
+
+func (mp *MapPool) NewGet(ip, port string) *ThriftPool {
+	addr := fmt.Sprintf("%s:%s", ip, port)
+	serverPool := NewThriftPool(ip,
+		port,
+		mp.maxConn,
+		mp.connTimeout,
+		mp.idleTimeout,
+		mp.CreatorFunc,
+		mp.Close,
+	)
+	mp.lock.Lock()
+	mp.pools[addr] = serverPool
+	mp.lock.Unlock()
 	return serverPool
 }
 
