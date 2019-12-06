@@ -25,7 +25,7 @@ type ThriftCreator func(ip, port string, connTimeout time.Duration, forPool *Thr
 
 type ThriftClientClose func(c *ThriftSocketClient) error
 
-type oldClientFactoryGenratedByThrift func(t thrift.TTransport, f thrift.TProtocolFactory) interface{}
+// type oldClientFactoryGenratedByThrift func(t thrift.TTransport, f thrift.TProtocolFactory) interface{}
 
 type ClientFactoryGenratedByThrift func(c thrift.TClient) interface{}
 
