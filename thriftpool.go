@@ -136,9 +136,14 @@ type ThriftSocketClient struct {
 
 //Client can return itself to pool without caring about which pool is managing it
 func (pClient *ThriftSocketClient) BackToPool() {
+
 	if pClient.Parent != nil && pClient.LostConnection == false {
 		pClient.Parent.Put(pClient)
 	}
+}
+
+func (pClient *ThriftSocketClient) SetLostConnections() {
+	pClient.LostConnection = true
 }
 
 func (pClient *ThriftSocketClient) VerifyConnection(errMsg *string) {
@@ -184,7 +189,6 @@ func NewThriftPool(ip, port string,
 
 	return thriftPool
 }
-
 func (p *ThriftPool) Get() (*ThriftSocketClient, error) {
 	p.lock.Lock()
 	if p.closed {
