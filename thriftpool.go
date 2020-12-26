@@ -5,7 +5,6 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"strings"
 	"sync"
@@ -22,7 +21,7 @@ const (
 /*
 * forPool : parent pool of this client
  */
-type ThriftCreator func(ip, port string, connTimeout, soTimeout time.Duration, forPool *ThriftPool) (*ThriftSocketClient, error)
+type ThriftCreator func(ip, port string, connTimeout time.Duration, forPool *ThriftPool) (*ThriftSocketClient, error)
 
 type ThriftClientClose func(c *ThriftSocketClient) error
 
@@ -32,8 +31,8 @@ type ClientFactoryGenratedByThrift func(c thrift.TClient) interface{}
 
 //GetThriftClientCreatorFunc creator function for creating mappool with binary protocol
 func GetThriftClientCreatorFunc(ClientFactory ClientFactoryGenratedByThrift) ThriftCreator {
-	return func(host string, port string, connTimeout, soTimeout time.Duration, forPool *ThriftPool) (*ThriftSocketClient, error) {
-		socket, err := thrift.NewTSocketTimeout(fmt.Sprintf("%s:%s", host, port), connTimeout, soTimeout)
+	return func(host string, port string, connTimeout time.Duration, forPool *ThriftPool) (*ThriftSocketClient, error) {
+		socket, err := thrift.NewTSocketTimeout(fmt.Sprintf("%s:%s", host, port), connTimeout)
 		if err != nil {
 			return nil, err
 		}
@@ -79,8 +78,8 @@ bsMapPool = thriftpool.NewMapPool(1000, 3600, 3600,
 */
 //GetThriftClientCreatorFuncCompactProtocol creator function for creating mappool with compact protocol
 func GetThriftClientCreatorFuncCompactProtocol(ClientFactory ClientFactoryGenratedByThrift) ThriftCreator {
-	return func(host string, port string, connTimeout, soTimeout time.Duration, forPool *ThriftPool) (*ThriftSocketClient, error) {
-		socket, err := thrift.NewTSocketTimeout(fmt.Sprintf("%s:%s", host, port), connTimeout, soTimeout)
+	return func(host string, port string, connTimeout time.Duration, forPool *ThriftPool) (*ThriftSocketClient, error) {
+		socket, err := thrift.NewTSocketTimeout(fmt.Sprintf("%s:%s", host, port), connTimeout)
 		if err != nil {
 			return nil, err
 		}
@@ -120,7 +119,6 @@ type ThriftPool struct {
 	idle        list.List
 	idleTimeout time.Duration
 	connTimeout time.Duration
-	soTimeout time.Duration
 	maxConn     uint32
 	count       uint32
 	ip          string
@@ -207,7 +205,7 @@ func (p *ThriftPool) Get() (*ThriftSocketClient, error) {
 		creatorFunc := p.CreatorFunc
 		p.count += 1
 		p.lock.Unlock()
-		client, err := creatorFunc(p.ip, p.port, p.connTimeout, p.connTimeout, p)
+		client, err := creatorFunc(p.ip, p.port, p.connTimeout, p)
 		if err != nil {
 			p.lock.Lock()
 			p.count -= 1
@@ -316,17 +314,7 @@ func (p *ThriftPool) CheckTimeout() {
 }
 
 func (c *ThriftSocketClient) SetConnTimeout(connTimeout uint32) {
-	err := c.Socket.SetConnTimeout(time.Duration(connTimeout) * time.Second)
-	if err != nil {
-		go log.Println(err.Error(), "err.Error() thriftpool.go:320")
-	}
-}
-
-func (c *ThriftSocketClient) SetSoTimeout(soTimeout uint32)  {
-	err := c.Socket.SetSocketTimeout(time.Duration(soTimeout) * time.Second)
-	if err != nil {
-		go log.Println(err.Error(), "err.Error() thriftpool.go:328")
-	}
+	c.Socket.SetTimeout(time.Duration(connTimeout) * time.Second)
 }
 
 func (c *ThriftSocketClient) LocalAddr() net.Addr {
