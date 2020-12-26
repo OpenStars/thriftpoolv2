@@ -430,6 +430,26 @@ func (mp *MapPool) Get(ip, port string) *ThriftPool {
 	return serverPool
 }
 
+func (mp *MapPool) GetWithConfig(ip, port string, maxConn, connTimeout, idleTimeout uint32) *ThriftPool {
+	serverPool, err := mp.getServerPool(ip, port)
+	if err != nil {
+		addr := fmt.Sprintf("%s:%s", ip, port)
+		serverPool = NewThriftPool(ip,
+			port,
+			maxConn,
+			connTimeout,
+			idleTimeout,
+			mp.CreatorFunc,
+			mp.Close,
+		)
+		mp.lock.Lock()
+		mp.pools[addr] = serverPool
+		mp.lock.Unlock()
+	}
+
+	return serverPool
+}
+
 func (mp *MapPool) NewGet(ip, port string) *ThriftPool {
 	addr := fmt.Sprintf("%s:%s", ip, port)
 	serverPool := NewThriftPool(ip,
