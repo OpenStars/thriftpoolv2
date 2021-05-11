@@ -1,4 +1,4 @@
-module github.com/Sonek-HoangBui/thriftpoolv2
+module github.com/OpenStars/thriftpoolv2
 
 go 1.15
 
