@@ -149,8 +149,8 @@ func (pClient *ThriftSocketClient) SetLostConnections() {
 func (pClient *ThriftSocketClient) VerifyConnection(errMsg *string) {
 	if strings.Contains(*errMsg, "EOF") || strings.Contains(*errMsg, "broken pipe") {
 		fmt.Printf("thrift socket lost connection: %v , err: %s \n", pClient.Socket.Addr().String(), *errMsg)
+		pClient.LostConnection = true
 	}
-	pClient.LostConnection = true
 }
 
 type idleConn struct {
